@@ -1,0 +1,8 @@
+C:\Users\Liam\C-Sharp Projects\DailyMTGImageSpider\DailyMTGImageSpider\bin\Release\DailyMTGImageSpider.exe
+C:\Users\Liam\C-Sharp Projects\DailyMTGImageSpider\DailyMTGImageSpider\bin\Release\DailyMTGImageSpider.pdb
+C:\Users\Liam\C-Sharp Projects\DailyMTGImageSpider\DailyMTGImageSpider\bin\Release\HtmlAgilityPack.dll
+C:\Users\Liam\C-Sharp Projects\DailyMTGImageSpider\DailyMTGImageSpider\bin\Release\HtmlAgilityPack.pdb
+C:\Users\Liam\C-Sharp Projects\DailyMTGImageSpider\DailyMTGImageSpider\bin\Release\HtmlAgilityPack.xml
+C:\Users\Liam\C-Sharp Projects\DailyMTGImageSpider\DailyMTGImageSpider\obj\x86\Release\DailyMTGImageSpider.exe
+C:\Users\Liam\C-Sharp Projects\DailyMTGImageSpider\DailyMTGImageSpider\obj\x86\Release\DailyMTGImageSpider.pdb
+C:\Users\Liam\C-Sharp Projects\DailyMTGImageSpider\DailyMTGImageSpider\obj\x86\Release\DailyMTGImageSpider.csprojResolveAssemblyReference.cache
