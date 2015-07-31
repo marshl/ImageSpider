@@ -7,6 +7,7 @@ using System.IO;
 using HtmlAgilityPack;
 using System.Security.Policy;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace DailyMTGImageSpider
 {
@@ -37,11 +38,7 @@ namespace DailyMTGImageSpider
 
             this.ReadListFromFIle( ref this.openList, "openlist" );
             this.ReadListFromFIle( ref this.closedList, "closedlist" );
-
-            if ( this.openList.Count == 0 )
-            {
-                this.openList.Add( STARTING_URL );
-            }
+            this.openList.Add( STARTING_URL );
         }
 
         public void Run()
@@ -83,8 +80,7 @@ namespace DailyMTGImageSpider
                 HtmlDocument doc = new HtmlDocument();
                 doc.LoadHtml( filedata );
 
-                HtmlNodeCollection backgroundNodes = doc.DocumentNode.SelectNodes( "//*[contains( @style, 'background-image' )]" );
-
+                
                 HtmlNodeCollection imageNodes = doc.DocumentNode.SelectNodes( "//img" );
                 if ( imageNodes != null )
                 {
@@ -101,43 +97,28 @@ namespace DailyMTGImageSpider
                             imagePath = ROOT_URL + imagePath;
                         }
 
-                        Uri imageUrl;
-                        try
-                        {
-                            imageUrl = new Uri( imagePath );
-                        }
-                        catch ( System.UriFormatException )
-                        {
-                            continue;
-                        }
-
-                        Uri fileUri = new Uri( OUTPUT_FOLDER + imageUrl.LocalPath );
-                        Uri dirUri = SnipLastUriElement( fileUri );
-                        try
-                        {
-                            Directory.CreateDirectory( dirUri.LocalPath );
-                        }
-                        catch
-                        {
-                            continue;
-                        }
-
-                        if ( !File.Exists( fileUri.LocalPath ) )
-                        {
-                            Console.WriteLine( "Downloading {0}", imageUrl );
-                            WebClient imageClient = new WebClient();
-                            try
-                            {
-                                imageClient.DownloadFile( imageUrl, fileUri.LocalPath );
-                            }
-                            catch ( System.Net.WebException )
-                            {
-                                Console.WriteLine( "Failed {0}", imageUrl );
-                                continue;
-                            }
-                        }
+                        this.DownloadImage( imagePath );
                     }
                 }
+
+                HtmlNodeCollection backgroundNodes = doc.DocumentNode.SelectNodes( "//*[contains( @style, 'background-image' )]" );
+                foreach ( HtmlNode backgroundNode in backgroundNodes )
+                {
+                    if ( backgroundNode.Attributes["style"] == null )
+                    {
+                        continue;
+                    }
+                    string style = backgroundNode.Attributes["style"].Value;
+                    Regex regex = new Regex( "background-image: url\\((.+?)\\)" );
+                    Match match = regex.Match( style );
+                    if ( match.Success )
+                    {
+                        string backgroundUrl = match.Groups[1].Value;
+                        this.DownloadImage( backgroundUrl );
+                    }
+                }
+
+
                 HtmlNodeCollection linkNodes = doc.DocumentNode.SelectNodes( "//a" );
                 if ( linkNodes != null )
                 {
@@ -165,6 +146,45 @@ namespace DailyMTGImageSpider
                 }
             }
             Console.WriteLine( "Done" );
+        }
+
+        public void DownloadImage( string _imagePath )
+        {
+            Uri imageUrl;
+            try
+            {
+                imageUrl = new Uri( _imagePath );
+            }
+            catch ( System.UriFormatException )
+            {
+                return;
+            }
+
+            Uri fileUri = new Uri( OUTPUT_FOLDER + imageUrl.LocalPath );
+            Uri dirUri = SnipLastUriElement( fileUri );
+            try
+            {
+                Directory.CreateDirectory( dirUri.LocalPath );
+            }
+            catch
+            {
+                return;
+            }
+
+            if ( !File.Exists( fileUri.LocalPath ) )
+            {
+                Console.WriteLine( "Downloading {0}", imageUrl );
+                WebClient imageClient = new WebClient();
+                try
+                {
+                    imageClient.DownloadFileAsync( imageUrl, fileUri.LocalPath );
+                }
+                catch ( System.Net.WebException )
+                {
+                    Console.WriteLine( "Failed {0}", imageUrl );
+                    return;
+                }
+            }
         }
 
         public void WriteListToFile( List<string> _list, string _filename )
