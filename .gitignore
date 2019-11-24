@@ -2,3 +2,4 @@ syntax: glob
 DailyMTGImageSpider\bin\Debug\openlist
 DailyMTGImageSpider/bin/
 DailyMTGImageSpider/obj/
+.vs/

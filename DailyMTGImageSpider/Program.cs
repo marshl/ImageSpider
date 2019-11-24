@@ -23,22 +23,22 @@ namespace DailyMTGImageSpider
         public string executionPath;
         public bool isCancelling = false;
 
-        static void Main( string[] _args )
+        static void Main(string[] _args)
         {
-            Program program = new Program( _args );
+            Program program = new Program(_args);
             program.Run();
         }
 
-        public Program( string[] _args )
+        public Program(string[] _args)
         {
             openList = new List<string>();
             closedList = new List<string>();
 
-            executionPath = Path.GetDirectoryName( Assembly.GetExecutingAssembly().Location );
+            executionPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
-            this.ReadListFromFIle( ref this.openList, "openlist" );
-            this.ReadListFromFIle( ref this.closedList, "closedlist" );
-            this.openList.Add( STARTING_URL );
+            this.ReadListFromFIle(ref this.openList, "openlist");
+            this.ReadListFromFIle(ref this.closedList, "closedlist");
+            this.openList.Add(STARTING_URL);
         }
 
         public void Run()
@@ -47,178 +47,178 @@ namespace DailyMTGImageSpider
             Console.TreatControlCAsInput = false;
             Console.CancelKeyPress += this.OnCancelKeyPress;
 
-            while ( this.openList.Count > 0 )
+            while (this.openList.Count > 0)
             {
-                if ( this.isCancelling )
+                if (this.isCancelling)
                 {
-                    this.WriteListToFile( this.openList, "openlist" );
-                    this.WriteListToFile( this.closedList, "closedlist" );
+                    this.WriteListToFile(this.openList, "openlist");
+                    this.WriteListToFile(this.closedList, "closedlist");
                     return;
                 }
 
                 string url = openList[0];
-                openList.RemoveAt( 0 );
-                closedList.Add( url );
+                openList.RemoveAt(0);
+                closedList.Add(url);
 
-                if ( url[0] == '/' )
+                if (url[0] == '/')
                 {
                     url = ROOT_URL + url;
                 }
 
-                Console.WriteLine( "Parsing {0}", url );
+                Console.WriteLine("Parsing {0}", url);
 
                 WebClient webClient = new WebClient();
                 string filedata;
                 try
                 {
-                   filedata = webClient.DownloadString( url );
+                    filedata = webClient.DownloadString(url);
                 }
-                catch ( System.Net.WebException )
+                catch (System.Net.WebException)
                 {
                     continue;
                 }
                 HtmlDocument doc = new HtmlDocument();
-                doc.LoadHtml( filedata );
+                doc.LoadHtml(filedata);
 
-                
-                HtmlNodeCollection imageNodes = doc.DocumentNode.SelectNodes( "//img" );
-                if ( imageNodes != null )
+
+                HtmlNodeCollection imageNodes = doc.DocumentNode.SelectNodes("//img");
+                if (imageNodes != null)
                 {
-                    foreach ( HtmlNode node in imageNodes )
+                    foreach (HtmlNode node in imageNodes)
                     {
-                        if ( node.Attributes["src"] == null || node.Attributes["src"].Value.Length == 0 )
+                        if (node.Attributes["src"] == null || node.Attributes["src"].Value.Length == 0)
                         {
                             continue;
                         }
 
                         string imagePath = node.Attributes["src"].Value;
-                        if ( imagePath[0] == '/' )
+                        if (imagePath[0] == '/')
                         {
                             imagePath = ROOT_URL + imagePath;
                         }
 
-                        this.DownloadImage( imagePath );
+                        this.DownloadImage(imagePath);
                     }
                 }
 
-                HtmlNodeCollection backgroundNodes = doc.DocumentNode.SelectNodes( "//*[contains( @style, 'background-image' )]" );
-                foreach ( HtmlNode backgroundNode in backgroundNodes )
+                HtmlNodeCollection backgroundNodes = doc.DocumentNode.SelectNodes("//*[contains( @style, 'background-image' )]");
+                foreach (HtmlNode backgroundNode in backgroundNodes)
                 {
-                    if ( backgroundNode.Attributes["style"] == null )
+                    if (backgroundNode.Attributes["style"] == null)
                     {
                         continue;
                     }
                     string style = backgroundNode.Attributes["style"].Value;
-                    Regex regex = new Regex( "background-image: url\\((.+?)\\)" );
-                    Match match = regex.Match( style );
-                    if ( match.Success )
+                    Regex regex = new Regex("background-image: url\\((.+?)\\)");
+                    Match match = regex.Match(style);
+                    if (match.Success)
                     {
                         string backgroundUrl = match.Groups[1].Value;
-                        this.DownloadImage( backgroundUrl );
+                        this.DownloadImage(backgroundUrl);
                     }
                 }
 
 
-                HtmlNodeCollection linkNodes = doc.DocumentNode.SelectNodes( "//a" );
-                if ( linkNodes != null )
+                HtmlNodeCollection linkNodes = doc.DocumentNode.SelectNodes("//a");
+                if (linkNodes != null)
                 {
-                    foreach ( HtmlNode node in linkNodes )
+                    foreach (HtmlNode node in linkNodes)
                     {
-                        if ( node.Attributes["href"] == null )
+                        if (node.Attributes["href"] == null)
                         {
                             continue;
                         }
 
                         string linkUrl = node.Attributes["href"].Value;
-                        if ( !closedList.Contains( linkUrl )
-                          && !openList.Contains( linkUrl )
-                          && ( linkUrl[0] == '/' || linkUrl.Contains( "wizards.com" ) )
-                          && !linkUrl.Contains( '?' )
-                          && !linkUrl.Contains( "dnd.wizards.com" )
-                          && !linkUrl.EndsWith( ".jpg" )
-                          && !linkUrl.EndsWith( ".png" )
-                          && !linkUrl.EndsWith( ".gif" ) )
+                        if (!closedList.Contains(linkUrl)
+                          && !openList.Contains(linkUrl)
+                          && (linkUrl[0] == '/' || linkUrl.Contains("wizards.com"))
+                          && !linkUrl.Contains('?')
+                          && !linkUrl.Contains("dnd.wizards.com")
+                          && !linkUrl.EndsWith(".jpg")
+                          && !linkUrl.EndsWith(".png")
+                          && !linkUrl.EndsWith(".gif"))
                         {
-                            openList.Add( linkUrl );
-                            Console.WriteLine( "Adding {0}", linkUrl );
+                            openList.Add(linkUrl);
+                            Console.WriteLine("Adding {0}", linkUrl);
                         }
                     }
                 }
             }
-            Console.WriteLine( "Done" );
+            Console.WriteLine("Done");
         }
 
-        public void DownloadImage( string _imagePath )
+        public void DownloadImage(string _imagePath)
         {
             Uri imageUrl;
             try
             {
-                imageUrl = new Uri( _imagePath );
+                imageUrl = new Uri(_imagePath);
             }
-            catch ( System.UriFormatException )
+            catch (System.UriFormatException)
             {
                 return;
             }
 
-            Uri fileUri = new Uri( OUTPUT_FOLDER + imageUrl.LocalPath );
-            Uri dirUri = SnipLastUriElement( fileUri );
+            Uri fileUri = new Uri(OUTPUT_FOLDER + imageUrl.LocalPath);
+            Uri dirUri = SnipLastUriElement(fileUri);
             try
             {
-                Directory.CreateDirectory( dirUri.LocalPath );
+                Directory.CreateDirectory(dirUri.LocalPath);
             }
             catch
             {
                 return;
             }
 
-            if ( !File.Exists( fileUri.LocalPath ) )
+            if (!File.Exists(fileUri.LocalPath))
             {
-                Console.WriteLine( "Downloading {0}", imageUrl );
+                Console.WriteLine("Downloading {0}", imageUrl);
                 WebClient imageClient = new WebClient();
                 try
                 {
-                    imageClient.DownloadFileAsync( imageUrl, fileUri.LocalPath );
+                    imageClient.DownloadFileAsync(imageUrl, fileUri.LocalPath);
                 }
-                catch ( System.Net.WebException )
+                catch (System.Net.WebException)
                 {
-                    Console.WriteLine( "Failed {0}", imageUrl );
+                    Console.WriteLine("Failed {0}", imageUrl);
                     return;
                 }
             }
         }
 
-        public void WriteListToFile( List<string> _list, string _filename )
+        public void WriteListToFile(List<string> _list, string _filename)
         {
-            StreamWriter outStream = new StreamWriter( _filename );
-            foreach ( string str in _list )
+            StreamWriter outStream = new StreamWriter(_filename);
+            foreach (string str in _list)
             {
-                outStream.WriteLine( str );
+                outStream.WriteLine(str);
             }
             outStream.Close();
         }
 
-        public void ReadListFromFIle( ref List<string> _list, string _filename )
+        public void ReadListFromFIle(ref List<string> _list, string _filename)
         {
-            StreamReader inStream = new StreamReader( _filename );
+            StreamReader inStream = new StreamReader(_filename);
             string str;
-            while ( (str = inStream.ReadLine()) != null )
+            while ((str = inStream.ReadLine()) != null)
             {
-                _list.Add( str );
+                _list.Add(str);
             }
             inStream.Close();
         }
 
-        public static Uri SnipLastUriElement( Uri _uri )
+        public static Uri SnipLastUriElement(Uri _uri)
         {
             string output = "";
-            for ( int i = 1; i < _uri.Segments.Length - 1; i++ )
+            for (int i = 1; i < _uri.Segments.Length - 1; i++)
             {
                 output += _uri.Segments[i];
             }
-            return new Uri( output );
+            return new Uri(output);
         }
 
-        public void OnCancelKeyPress( object _sender, ConsoleCancelEventArgs _e )
+        public void OnCancelKeyPress(object _sender, ConsoleCancelEventArgs _e)
         {
             _e.Cancel = true;
             this.isCancelling = true;
